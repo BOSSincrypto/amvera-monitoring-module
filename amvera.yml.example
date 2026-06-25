@@ -1,0 +1,24 @@
+# Конфигурация Amvera для приложения на Python (pip-среда) со встроенным мониторингом.
+# Положите этот файл в корень репозитория как `amvera.yml` (или amvera.yaml).
+# Онлайн-генератор: https://manifest.amvera.ru/
+
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: "3.11"   # укажите вашу версию Python (3.10 / 3.11 / 3.12)
+
+build:
+  requirementsPath: requirements.txt   # путь к requirements.txt от корня репо
+  useCache: true
+
+run:
+  # Один из двух взаимоисключающих вариантов запуска:
+  scriptName: bot.py        # вариант 1: `python3 bot.py`
+  # command: python3         # вариант 2: своя команда запуска
+  # args: bot.py
+  containerPort: 8080        # порт, который слушает веб-часть (sqladmin / FastAPI)
+  persistenceMount: /data    # постоянное хранилище Amvera монтируется сюда
+
+# ВАЖНО: BOT_TOKEN и все MONITOR_* переменные НЕ кладите в этот файл!
+# Добавляйте их через Amvera -> Переменные / Секреты окружения.
