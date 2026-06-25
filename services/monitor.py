@@ -245,7 +245,8 @@ class MonitorService:
         for key, triggered, msg in checks:
             if not triggered:
                 continue
-            if now - self._last_alert.get(key, 0.0) < cfg.cooldown_sec:
+            last_alert = self._last_alert.get(key)
+            if last_alert is not None and now - last_alert < cfg.cooldown_sec:
                 continue
             candidates.append((key, msg))
 

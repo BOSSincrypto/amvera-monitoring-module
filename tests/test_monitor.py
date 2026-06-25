@@ -148,9 +148,7 @@ async def main():
     env_clear()
     env_set(admin_chat_id="111", cpu_threshold="0", mem_threshold="999",
             disk_threshold="999", cooldown_sec="1000")
-    cfg_dbg = MonitorConfig.from_env()
-    print(f"[DEBUG] admin_chat_id={cfg_dbg.admin_chat_id!r} cpu_thr={cfg_dbg.cpu_threshold!r}")
-    svc3 = MonitorService(bot=bot2, session_factory=sf, config=cfg_dbg)
+    svc3 = MonitorService(bot=bot2, session_factory=sf, config=MonitorConfig.from_env())
     await svc3._check_and_alert(_metric(cpu=100))
     ck("alert: cpu fired once", len(bot2.sent) == 1, f"sent={len(bot2.sent)}")
     if bot2.sent:
