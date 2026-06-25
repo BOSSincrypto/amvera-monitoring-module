@@ -115,6 +115,12 @@ async def main():
     ck("collect: net_bytes_recv>=0", last.net_bytes_recv >= 0)
     ck("collect: timestamp set", last.timestamp is not None)
 
+    # В CI на полностью idle машине psutil.cpu_percent может вернуть 0.0,
+    # из-за чего порог 0% не сработает. Фиксируем CPU на 100% для блока алертов.
+    import app.services.monitor as _monitor_module
+
+    _monitor_module.psutil.cpu_percent = lambda **kwargs: 100.0
+
     # ---------- Алерт: ниже порога -> ничего не шлём ----------
     bot = FakeBot()
     env_clear()

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import app.api.metrics_router as mr
+import app.services.monitor as monitor_module
 import pytest
 from app.models.system_metric import Base
 from fastapi import FastAPI
@@ -79,6 +80,8 @@ def test_html_escape_in_alert_text(session_factory, monkeypatch):
 
     import asyncio
 
+    # Детерминированный триггер алерта независимо от реальной загрузки CPU
+    monkeypatch.setattr(monitor_module.psutil, "cpu_percent", lambda **kwargs: 100.0)
     asyncio.run(svc.collect_and_store())
     assert len(bot.sent) == 1
     text = bot.sent[0][1]
