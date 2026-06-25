@@ -1,7 +1,12 @@
 # Модуль мониторинга сервера (Amvera) для aiogram-приложения
 
+[![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/BOSSincrypto/amvera-monitoring-module/generate)
+[![CI](https://github.com/BOSSincrypto/amvera-monitoring-module/actions/workflows/ci.yml/badge.svg)](https://github.com/BOSSincrypto/amvera-monitoring-module/actions)
+
 Лёгкий встроенный мониторинг ресурсов контейнера с алертами в Telegram.
 **+0 отдельных процессов, +1 зависимость (psutil), +~2-3 МБ RAM, +0 ₽/мес на Amvera.**
+
+> 🇬🇧 English version: [`README.md`](README.md)
 
 ---
 

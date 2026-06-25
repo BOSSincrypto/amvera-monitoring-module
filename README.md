@@ -1,5 +1,6 @@
 # Amvera Server Monitoring Module
 
+[![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/BOSSincrypto/amvera-monitoring-module/generate)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![CI](https://github.com/BOSSincrypto/amvera-monitoring-module/actions/workflows/ci.yml/badge.svg)](https://github.com/BOSSincrypto/amvera-monitoring-module/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
