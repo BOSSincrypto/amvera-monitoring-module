@@ -1,7 +1,7 @@
 # Amvera Server Monitoring Module
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![pytest](https://img.shields.io/badge/tests-pytest%20%7C%20ruff%20%7C%20mypy%20%7C%20bandit-green)](https://github.com/BOSSincrypto/amvera-monitoring-module/actions)
+[![CI](https://github.com/BOSSincrypto/amvera-monitoring-module/actions/workflows/ci.yml/badge.svg)](https://github.com/BOSSincrypto/amvera-monitoring-module/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Lightweight, zero-cost container monitoring for Amvera-hosted Python apps.**
