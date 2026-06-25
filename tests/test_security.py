@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import app.api.metrics_router as mr
-import app.services.monitor as monitor_module
 import pytest
 from app.models.system_metric import Base
 from fastapi import FastAPI
@@ -62,7 +61,9 @@ def test_401_does_not_leak_internals(client, monkeypatch):
 
 
 def test_html_escape_in_alert_text(session_factory, monkeypatch):
+    from app.models.system_metric import SystemMetric
     from app.services.monitor import MonitorConfig, MonitorService
+    from app.services.monitor import _utcnow as monitor_utcnow
 
     class CapturingBot:
         def __init__(self):
@@ -78,11 +79,25 @@ def test_html_escape_in_alert_text(session_factory, monkeypatch):
     bot = CapturingBot()
     svc = MonitorService(bot=bot, session_factory=session_factory, config=cfg)
 
+    metric = SystemMetric(
+        timestamp=monitor_utcnow(),
+        cpu_percent=100.0,
+        mem_total_mb=1000.0,
+        mem_used_mb=500.0,
+        mem_percent=50.0,
+        disk_total_gb=100.0,
+        disk_used_gb=50.0,
+        disk_percent=50.0,
+        net_bytes_sent=0,
+        net_bytes_recv=0,
+        load_avg_1=0.0,
+        load_avg_5=0.0,
+        load_avg_15=0.0,
+    )
+
     import asyncio
 
-    # Детерминированный триггер алерта независимо от реальной загрузки CPU
-    monkeypatch.setattr(monitor_module.psutil, "cpu_percent", lambda **kwargs: 100.0)
-    asyncio.run(svc.collect_and_store())
+    asyncio.run(svc._check_and_alert(metric))
     assert len(bot.sent) == 1
     text = bot.sent[0][1]
     assert "<script>" not in text

@@ -115,38 +115,52 @@ async def main():
     ck("collect: net_bytes_recv>=0", last.net_bytes_recv >= 0)
     ck("collect: timestamp set", last.timestamp is not None)
 
-    # В CI на полностью idle машине psutil.cpu_percent может вернуть 0.0,
-    # из-за чего порог 0% не сработает. Фиксируем CPU на 100% для блока алертов.
-    import app.services.monitor as _monitor_module
-
-    _monitor_module.psutil.cpu_percent = lambda **kwargs: 100.0
+    # ---------- Алерт: детерминированные тесты через _check_and_alert ----------
+    def _metric(
+        cpu: float = 0.0, mem: float = 0.0, disk: float = 0.0
+    ) -> SystemMetric:
+        return SystemMetric(
+            timestamp=_utcnow(),
+            cpu_percent=cpu,
+            mem_total_mb=1000.0,
+            mem_used_mb=mem * 10.0,
+            mem_percent=mem,
+            disk_total_gb=100.0,
+            disk_used_gb=disk,
+            disk_percent=disk,
+            net_bytes_sent=0,
+            net_bytes_recv=0,
+            load_avg_1=0.0,
+            load_avg_5=0.0,
+            load_avg_15=0.0,
+        )
 
     # ---------- Алерт: ниже порога -> ничего не шлём ----------
     bot = FakeBot()
     env_clear()
     env_set(admin_chat_id="111", cpu_threshold="999", mem_threshold="999", disk_threshold="999")
     svc2 = MonitorService(bot=bot, session_factory=sf, config=MonitorConfig.from_env())
-    await svc2.collect_and_store()
+    await svc2._check_and_alert(_metric(cpu=100, mem=100, disk=100))
     ck("alert: none below threshold", len(bot.sent) == 0)
 
     # ---------- Алерт: CPU выше порога -> 1 сообщение ----------
     bot2 = FakeBot()
     env_clear()
     env_set(admin_chat_id="111", cpu_threshold="0", mem_threshold="999",
-            disk_threshold="999", cooldown_sec="1000", disk_path=".")
+            disk_threshold="999", cooldown_sec="1000")
     svc3 = MonitorService(bot=bot2, session_factory=sf, config=MonitorConfig.from_env())
-    await svc3.collect_and_store()
+    await svc3._check_and_alert(_metric(cpu=100))
     ck("alert: cpu fired once", len(bot2.sent) == 1, f"sent={len(bot2.sent)}")
     if bot2.sent:
         ck("alert: chat_id correct", bot2.sent[0][0] == 111)
         ck("alert: text has CPU", "CPU" in bot2.sent[0][1])
-    # кулдаун: повторный сбор в окне кулдауна -> нового сообщения нет
-    await svc3.collect_and_store()
+    # кулдаун: повторный вызов в окне кулдауна -> нового сообщения нет
+    await svc3._check_and_alert(_metric(cpu=100))
     ck("alert: cooldown blocks 2nd", len(bot2.sent) == 1, f"sent={len(bot2.sent)}")
 
     # ---------- Алерт: bot=None -> алерты выключены, без краха ----------
     svc4 = MonitorService(bot=None, session_factory=sf, config=MonitorConfig.from_env())
-    await svc4.collect_and_store()
+    await svc4._check_and_alert(_metric(cpu=100))
     ck("alert: bot None ok", True)
 
     # ---------- cleanup_old: удаляет старое, оставляет свежее ----------
@@ -192,15 +206,15 @@ async def main():
     fb = FailOnceBot()
     env_clear()
     env_set(admin_chat_id="222", cpu_threshold="0", mem_threshold="999",
-            disk_threshold="999", cooldown_sec="10000", disk_path=".")
+            disk_threshold="999", cooldown_sec="10000")
     svc_fail = MonitorService(bot=fb, session_factory=sf, config=MonitorConfig.from_env())
-    # 1-й сбор: send падает -> кулдаун НЕ должен зафиксироваться
-    await svc_fail.collect_and_store()
+    # 1-й вызов: send падает -> кулдаун НЕ должен зафиксироваться
+    await svc_fail._check_and_alert(_metric(cpu=100))
     ck("sec: failed send -> no cooldown set (1st call attempted)",
        fb.calls == 1, f"calls={fb.calls}")
     ck("sec: failed send -> 0 delivered", len(fb.sent) == 0)
-    # 2-й сбор: проблема та же -> алерт должен повториться (кулдауна нет)
-    await svc_fail.collect_and_store()
+    # 2-й вызов: проблема та же -> алерт должен повториться (кулдауна нет)
+    await svc_fail._check_and_alert(_metric(cpu=100))
     ck("sec: retry alert after failure -> delivered on 2nd",
        len(fb.sent) == 1, f"sent={len(fb.sent)}")
 
@@ -208,10 +222,9 @@ async def main():
     bot_esc = FakeBot()
     env_clear()
     env_set(admin_chat_id="333", cpu_threshold="0", mem_threshold="999",
-            disk_threshold="999", cooldown_sec="10000", server_name="a<b>&c`x",
-            disk_path=".")
+            disk_threshold="999", cooldown_sec="10000", server_name="a<b>&c`x")
     svc_esc = MonitorService(bot=bot_esc, session_factory=sf, config=MonitorConfig.from_env())
-    await svc_esc.collect_and_store()
+    await svc_esc._check_and_alert(_metric(cpu=100))
     if bot_esc.sent:
         body = bot_esc.sent[0][1]
         ck("sec: server_name HTML-escaped (< -> &lt;)", "&lt;" in body, body)
